@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Color Palette Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #fff;
+      padding: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .color-box {
+      width: 140px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .swatch {
+      height: 100px;
+      background-color: var(--color);
+    }
+    .label {
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+      background-color: #222;
+      border-top: 1px solid #444;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const colors = {
+      "primary": "rgb(144, 206, 244)",
+      "on-primary": "rgb(0, 52, 74)",
+      "primary-container": "rgb(0, 76, 105)",
+      "on-primary-container": "rgb(196, 231, 255)",
+      "secondary": "rgb(181, 201, 215)",
+      "on-secondary": "rgb(32, 51, 62)",
+      "secondary-container": "rgb(55, 73, 85)",
+      "on-secondary-container": "rgb(209, 229, 244)",
+      "tertiary": "rgb(202, 193, 233)",
+      "on-tertiary": "rgb(50, 44, 76)",
+      "tertiary-container": "rgb(73, 66, 100)",
+      "on-tertiary-container": "rgb(231, 222, 255)",
+      "error": "rgb(255, 180, 171)",
+      "on-error": "rgb(105, 0, 5)",
+      "error-container": "rgb(147, 0, 10)",
+      "on-error-container": "rgb(255, 218, 214)",
+      "background": "rgb(15, 20, 23)",
+      "on-background": "rgb(223, 227, 231)",
+      "surface": "rgb(15, 20, 23)",
+      "on-surface": "rgb(223, 227, 231)",
+      "outline": "rgb(139, 146, 151)",
+      "shadow": "rgb(0, 0, 0)",
+      "inverse-primary": "rgb(29, 101, 134)"
+    };
+
+    for (const [name, value] of Object.entries(colors)) {
+      const box = document.createElement("div");
+      box.className = "color-box";
+      box.innerHTML = `
+        <div class="swatch" style="--color: ${value}"></div>
+        <div class="label">${name}</div>
+      `;
+      document.body.appendChild(box);
+    }
+  </script>
+</body>
+</html>
