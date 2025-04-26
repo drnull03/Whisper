@@ -4,7 +4,7 @@
 */share/
 */data/
 */lib/
-*/pyvenv.cfg/
-*/node_modules/
-*/package-lock.json
+*/pyvenv.cfg
+**/node_modules/
+**/package-lock.json
 
