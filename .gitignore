@@ -1,10 +1,11 @@
-*/bin/
-*/include/
-*/lib64/
-*/share/
-*/data/
-*/lib/
-*/pyvenv.cfg
+**/bin/
+**/include/
+**/lib64
+**/share/
+**/data/
+**/lib/
+**/pyvenv.cfg
 **/node_modules/
 **/package-lock.json
+**/package.json
 
