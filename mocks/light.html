@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Email Client UI</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    .email-container {
+      background: #fff;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .field {
+      margin-bottom: 15px;
+    }
+    .field label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .field input[type="text"],
+    .field textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    textarea {
+      min-height: 200px;
+      resize: vertical;
+    }
+    .send-button {
+      background: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .send-button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+<div class="email-container">
+  <div class="field">
+    <label for="from">From:</label>
+    <input type="text" id="from" placeholder="your@email.com">
+  </div>
+
+  <div class="field">
+    <label for="to">To:</label>
+    <input type="text" id="to" placeholder="recipient@email.com">
+  </div>
+
+  <div class="field">
+    <label for="cc">CC:</label>
+    <input type="text" id="cc" placeholder="cc@email.com">
+  </div>
+
+  <div class="field">
+    <label for="message">Message:</label>
+    <textarea id="message" placeholder="Write your email here..."></textarea>
+  </div>
+
+  <button class="send-button" onclick="sendEmail()">Send Email</button>
+</div>
+
+<script>
+  function sendEmail() {
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+    const cc = document.getElementById('cc').value;
+    const message = document.getElementById('message').value;
+
+    // For now, just log it to console (replace this with actual send logic)
+    console.log('Sending email...');
+    console.log('From:', from);
+    console.log('To:', to);
+    console.log('CC:', cc);
+    console.log('Message:', message);
+
+    alert('Email data captured! Check console.');
+  }
+</script>
+
+</body>
+</html>
+

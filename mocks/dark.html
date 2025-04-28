@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Email Client UI (Dark Mode)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      padding: 20px;
+      color: #e0e0e0;
+    }
+    .email-container {
+      background: #1e1e1e;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.7);
+    }
+    .field {
+      margin-bottom: 15px;
+    }
+    .field label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #bbbbbb;
+    }
+    .field input[type="text"],
+    .field textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #333;
+      border-radius: 5px;
+      background: #2a2a2a;
+      color: #e0e0e0;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .field input[type="text"]::placeholder,
+    .field textarea::placeholder {
+      color: #777;
+    }
+    textarea {
+      min-height: 200px;
+      resize: vertical;
+    }
+    .send-button {
+      background: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .send-button:hover {
+      background: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+<div class="email-container">
+  <div class="field">
+    <label for="from">From:</label>
+    <input type="text" id="from" placeholder="your@email.com">
+  </div>
+
+  <div class="field">
+    <label for="to">To:</label>
+    <input type="text" id="to" placeholder="recipient@email.com">
+  </div>
+
+  <div class="field">
+    <label for="cc">CC:</label>
+    <input type="text" id="cc" placeholder="cc@email.com">
+  </div>
+
+  <div class="field">
+    <label for="message">Message:</label>
+    <textarea id="message" placeholder="Write your email here..."></textarea>
+  </div>
+
+  <button class="send-button" onclick="sendEmail()">Send Email</button>
+</div>
+
+<script>
+  function sendEmail() {
+    const from = document.getElementById('from').value;
+    const to = document.getElementById('to').value;
+    const cc = document.getElementById('cc').value;
+    const message = document.getElementById('message').value;
+
+    console.log('Sending email...');
+    console.log('From:', from);
+    console.log('To:', to);
+    console.log('CC:', cc);
+    console.log('Message:', message);
+
+    alert('Email data captured! Check console.');
+  }
+</script>
+
+</body>
+</html>
