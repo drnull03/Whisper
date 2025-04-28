@@ -1,0 +1,8 @@
+exit
+await calc1.add(100,300);
+await calc1.add(100,150);
+const calc1 = await ethers.getContractAt("Calculator","0x5FC8d32690cc91D4c39d9d3abcBD16989F875707");
+const calc = await ethers.getContractAt("Calculator","0x5FC8d32690cc91D4c39d9d3abcBD16989F875707");
+  console.log(`Result: ${result.toString()}`);
+  // 4. Display the result
+const calc = await ethers.getContractAt("Calculator","const result = await calculator.add(a, b);")

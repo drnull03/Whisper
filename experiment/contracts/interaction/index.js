@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 const RPC_URL = `https://sepolia.infura.io/v3/550ff109045d4614871503c52a406e07`;
 
 // Your wallet's private key
+//don't attempt to use this key it has been changed
 const PRIVATE_KEY = "47951a88df3bcf005fa13ec683bd45cf81b7b4351ae4fa7c9bc459a5cd8ad433"; 
 
 // Create provider
