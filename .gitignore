@@ -13,3 +13,5 @@
 **/*.gz
 **/ipfs-cluster-ctl/
 **/ipfs-cluster-service/
+**/compose/
+**/kubo/
