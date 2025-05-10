@@ -1,1 +1,1 @@
-sudo docker run --name spam-detector --network host -d spam-detector
+sudo docker run --name spam-detector -d spam-detector

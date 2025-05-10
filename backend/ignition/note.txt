@@ -1,0 +1,1 @@
+This project uses regular javascript deployment , it does not use any hardhat ignation modules.
