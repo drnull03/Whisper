@@ -1,0 +1,6 @@
+we first deploy shush and get the address
+
+we then deploy whisper and give shush address
+
+
+then we can from the deployer address setWhisper and set it to whisper for access control
