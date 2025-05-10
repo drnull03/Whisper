@@ -1,0 +1,1 @@
+this hardhat configuration file should simulate L2 network.
