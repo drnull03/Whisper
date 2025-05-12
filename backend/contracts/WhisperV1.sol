@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
@@ -42,11 +42,11 @@ contract Whisper is Pausable,AccessControl{
 
 
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
-        pause();
+        _pause();
     }
 
     function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
-        unpause();
+        _unpause();
     }
     //old modifiers this cost more in gas bad !!!!
     /*

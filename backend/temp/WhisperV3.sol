@@ -8,9 +8,30 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 error ZeroAddressNotAllowed();
 error UserDoesNotExist(address user);
 error NameTaken();
-error NotOwnerOfSendingDomain(string name);
+error NotOwnerOfSendningDomain(string name);
+error SpammerSendingNotAllowed();
+
+interface ISHUSH {
+    function balanceOf(address user) external view returns (uint256);
+
+    function burnFrom(address user, uint256 amount) external;
+}
 
 contract Whisper is Pausable, AccessControl {
+    uint256 public reportStake = 5 * 10 ** 18;
+
+    //ERC20 related stuff
+    ISHUSH public shushToken;
+    uint256 public minRequiredBalance = 40 * 10 ** 18;
+    uint256 public spamPenalty = 10 * 10 ** 18;
+
+    //this is another trick the indexed keyword is used to make this parameter searchable using inbox[_to].push(email);
+    //the trick here is this events are public is this plays as a feature of proof of sending (Non-repudiation)
+    //since it’s an immutable, timestamped record on the blockchain.
+    event EmailSent(string indexed from, string indexed to);
+    //hiding the reporter identity for his benefit
+    event SpamReported(address indexed reported);
+
     //define user role
     //bytes32 public constant USER_ROLE = keccak256("USER_ROLE");
 
@@ -34,8 +55,9 @@ contract Whisper is Pausable, AccessControl {
     }
 
     //the deployer is the owner
-    constructor() {
+    constructor(address _shushToken) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        shushToken = ISHUSH(_shushToken);
     }
 
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -75,7 +97,7 @@ contract Whisper is Pausable, AccessControl {
 
     modifier nameOwner(string memory _name) {
         if (ENS[_name].addr != msg.sender) {
-            revert NotOwnerOfSendingDomain(_name);
+            revert NotOwnerOfSendningDomain(_name);
         }
         _;
     }
@@ -84,6 +106,12 @@ contract Whisper is Pausable, AccessControl {
         if (ENS[_name].addr != address(0)) {
             revert NameTaken();
         }
+        _;
+    }
+
+    modifier notAspammer() {
+        uint256 balance = shushToken.balanceOf(msg.sender);
+        if (balance < minRequiredBalance) revert SpammerSendingNotAllowed();
         _;
     }
 
@@ -98,7 +126,7 @@ contract Whisper is Pausable, AccessControl {
     mapping(address => bool) private hasInbox;
 
     //email name lookup
-    mapping(string => Identity) private ENS;
+    mapping(string => Identity) public ENS;
 
     function registerUser(
         string memory _name,
@@ -119,44 +147,33 @@ contract Whisper is Pausable, AccessControl {
 
     function getInbox()
         public
-        view
         userExist(msg.sender)
         whenNotPaused
         returns (Email[] memory)
     {
-        return Inbox[msg.sender];
-    }
-
-    function clearInbox() public userExist(msg.sender) whenNotPaused {
+        Email[] memory inboxCopy = Inbox[msg.sender];
         delete Inbox[msg.sender];
+        return inboxCopy;
     }
 
     //same as the above but for getting the sent email of the user
     // for the sent inbox feature with email
     function getSent()
         public
-        view
         userExist(msg.sender)
         whenNotPaused
         returns (Email[] memory)
     {
-        return Sent[msg.sender];
-    }
-
-    function clearSent() public userExist(msg.sender) whenNotPaused {
+        Email[] memory sentCopy = Sent[msg.sender];
         delete Sent[msg.sender];
+        return sentCopy;
     }
 
-    function getPublicKeyOf(
-        string memory _name
-    )
-        public
-        view
-        userExist(ENS[_name].addr)
-        whenNotPaused
-        returns (string memory)
-    {
-        return ENS[_name].encryptionPublicKey;
+    function reportSpam(address _sender) external {
+        // Optional: require reporter to stake some SHUSH too
+        shushToken.burnFrom(msg.sender, reportStake);
+        shushToken.burnFrom(_sender, spamPenalty);
+        emit SpamReported(_sender);
     }
 
     event EncryptionKeyUpdated(address user, string newKey);
@@ -164,15 +181,10 @@ contract Whisper is Pausable, AccessControl {
     function updateEncryptionKey(
         string memory _newKey,
         string memory _name
-    ) public nameOwner(_name) whenNotPaused {
+    ) public nameOwner(_name) {
         ENS[_name].encryptionPublicKey = _newKey;
         emit EncryptionKeyUpdated(msg.sender, _newKey);
     }
-
-    //this is another trick the indexed keyword is used to make this parameter searchable using inbox[_to].push(email);
-    //the trick here is this events are public is this plays as a feature of proof of sending (Non-repudiation)
-    //since it’s an immutable, timestamped record on the blockchain.
-    event EmailSent(string indexed from, string indexed to);
 
     //this function create and email in memory of each etheruim node
     //then adds the message to recipient inbox this function is safe because msg.sender is safe we can't send emails in someone's name
