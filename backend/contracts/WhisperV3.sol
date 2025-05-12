@@ -147,26 +147,32 @@ contract Whisper is Pausable, AccessControl {
 
     function getInbox()
         public
+        view
         userExist(msg.sender)
         whenNotPaused
         returns (Email[] memory)
     {
-        Email[] memory inboxCopy = Inbox[msg.sender];
+        return Inbox[msg.sender];
+    }
+
+    function clearInbox() public userExist(msg.sender) whenNotPaused {
         delete Inbox[msg.sender];
-        return inboxCopy;
     }
 
     //same as the above but for getting the sent email of the user
     // for the sent inbox feature with email
     function getSent()
         public
+        view
         userExist(msg.sender)
         whenNotPaused
         returns (Email[] memory)
     {
-        Email[] memory sentCopy = Sent[msg.sender];
+        return Sent[msg.sender];
+    }
+
+    function clearSent() public userExist(msg.sender) whenNotPaused {
         delete Sent[msg.sender];
-        return sentCopy;
     }
 
     function reportSpam(address _sender) external {
@@ -181,11 +187,23 @@ contract Whisper is Pausable, AccessControl {
     function updateEncryptionKey(
         string memory _newKey,
         string memory _name
-    ) public nameOwner(_name) {
+    ) public nameOwner(_name) whenNotPaused {
         ENS[_name].encryptionPublicKey = _newKey;
         emit EncryptionKeyUpdated(msg.sender, _newKey);
     }
 
+
+    function getPublicKeyOf(
+        string memory _name
+    )
+        public
+        view
+        userExist(ENS[_name].addr)
+        whenNotPaused
+        returns (string memory)
+    {
+        return ENS[_name].encryptionPublicKey;
+    }
     //this function create and email in memory of each etheruim node
     //then adds the message to recipient inbox this function is safe because msg.sender is safe we can't send emails in someone's name
 
