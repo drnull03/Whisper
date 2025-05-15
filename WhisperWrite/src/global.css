@@ -1,0 +1,170 @@
+/* ------------------- */
+/* Reset               */
+/* ------------------- */
+
+/* Box sizing */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Reset margins */
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+p,
+figure,
+picture {
+    margin: 0; 
+}
+
+/* set up the body */
+body {
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+/* make images easier to work with */
+img,
+picture {
+    max-width: 100%;
+    display: block;
+}
+
+/* make form elements easier to work with */
+input,
+button,
+textarea,
+select {
+    font: inherit;
+}
+
+/* remove animations for people who've turned them off */
+@media (prefers-reduced-motion: reduce) {  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Hiding the blue highlight box on touch screens */
+html {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ------------------- */
+/* Typography          */
+/* ------------------- */
+
+:root {
+    /* Base font sizes for mobile */
+    --fs-xs: 0.875rem; /* small warnings/notes */
+    --fs-300: 1rem;    /* smaller text */
+    --fs-400: 1.125rem; /* normal paragraphs */
+    --fs-500: 1.25rem;  /* paragraph titles */
+    --fs-xl: 2rem;      /* large headlines */
+}
+  
+  /* Tablet */
+  @media (min-width: 768px) {
+    :root {
+        --fs-xs: 1rem;
+        --fs-300: 1.125rem;
+        --fs-400: 1.25rem;
+        --fs-500: 1.5rem;
+        --fs-xl: 2.5rem;
+    }
+}
+  
+  /* Desktop */
+  @media (min-width: 1024px) {
+    :root {
+        --fs-xs: 1.125rem;
+        --fs-300: 1.25rem;
+        --fs-400: 1.5rem;
+        --fs-500: 1.75rem;
+        --fs-xl: 3rem;
+    }
+}
+
+.fs-xs {font-size: var(--fs-xs);}
+.fs-300 {font-size: var(--fs-300);}
+.fs-400 {font-size: var(--fs-400);}
+.fs-500 {font-size: var(--fs-500);}
+.fs-xl {font-size: var(--fs-xl);}
+
+/* ------------------- */
+/* Styles              */
+/* ------------------- */
+
+body {
+    background-color: black;
+    color: #a1a1a1;
+    font-family: monospace;
+}
+
+button {
+    cursor: pointer;
+}
+
+button, input {
+    padding: .2rem .4rem;
+    border: 1px solid #a1a1a166;
+    color: #a1a1a1;
+    background-color: black;
+    border-radius: 0;
+}
+
+button:hover, input:hover {
+    color: white;
+    border-color: white;
+}
+
+button:active {
+    background-color: #a1a1a1;
+    border-color: #a1a1a1;
+    color: black;
+}
+
+textarea {
+    padding: .2rem .4rem;
+    border: 1px solid #a1a1a166;
+    color: #a1a1a1;
+    background-color: black;
+    border-radius: 0;
+    font-family: monospace;
+    resize: vertical;
+}
+
+textarea:hover {
+    color: white;
+    border-color: white;
+}
+
+textarea:focus {
+    outline: none;
+    color: white;
+    border-color: white;
+}
+
+pre::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+pre::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+pre::-webkit-scrollbar-track {
+    background: #222;
+}
