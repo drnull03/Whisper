@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";             // Pausable che
 
 error UrNotWhisper();
 error ShushIsNonTransferable();
-error AlreadyClaimedShushToken(address user);
+
 
 contract SHUSH is ERC20, AccessControl, Pausable {
     event WhisperUpdated(address indexed newWhisper);
@@ -34,12 +34,6 @@ contract SHUSH is ERC20, AccessControl, Pausable {
     }
 
 
-   modifier firstTimeClaim(address user) {
-    if(hasClaimed[user]){
-        revert AlreadyClaimedShushToken(user);
-    }
-    _;
-   }
 
 
     
@@ -65,7 +59,7 @@ contract SHUSH is ERC20, AccessControl, Pausable {
     
 
     /// @notice One-time claim of 100 SHUSH, only via Whisper
-    function claimInitial(address _user) external onlyWhisper firstTimeClaim(_user) {
+    function claimInitial(address _user) external onlyWhisper  {
         
         hasClaimed[_user] = true;
         _mint(_user, 100 * 10 ** decimals());

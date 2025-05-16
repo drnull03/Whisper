@@ -21,3 +21,11 @@ module.exports = {
 };
 
 */
+
+
+
+
+PORTS:
+hardhat port  8545
+ipfs 5001
+QuietML 5000

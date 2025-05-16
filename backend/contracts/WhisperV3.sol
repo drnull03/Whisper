@@ -188,7 +188,7 @@ contract Whisper is Pausable, AccessControl {
 
 
 
-    function reportSpam(string memory _sender) external whenNotPaused {
+    function reportSpam(string memory _sender) external userExist(ENS[_sender].addr) whenNotPaused {
         // Optional: require reporter to stake some SHUSH too
         shushToken.burnFrom(msg.sender, reportStake);
         shushToken.burnFrom(ENS[_sender].addr, spamPenalty);
@@ -229,7 +229,7 @@ contract Whisper is Pausable, AccessControl {
         string memory _from,
         string memory _to,
         string memory _ipfsCID
-    ) public nameOwner(_from) noEmptyString(_ipfsCID,"IPFS CID Feild") whenNotPaused {
+    ) public notAspammer nameOwner(_from) noEmptyString(_ipfsCID,"IPFS CID Feild") whenNotPaused {
         // nameOwner replaced userExist() it check for existance + make sure he owns the name// userExist(msg.sender) is very important we make sure the user exist + he owns the account because msg.sender is safe
 
         //we didn't use userExist modifier because we want the reolved address multiple times.
@@ -238,9 +238,7 @@ contract Whisper is Pausable, AccessControl {
         if (recipientAddr == address(0)) {
             revert UserDoesNotExist(recipientAddr);
         }
-        if(shushToken.balanceOf(recipientAddr) < minRequiredBalance){
-            revert SpammerSendingNotAllowed();
-        }
+       
 
         Email memory email = Email({
             sender: _from,

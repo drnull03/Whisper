@@ -1,0 +1,1 @@
+npx hardhat ignition deploy ../ignition/modules/WhisperV3Module.js --network l2_sim
