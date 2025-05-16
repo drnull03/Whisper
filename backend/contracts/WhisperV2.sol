@@ -81,7 +81,7 @@ contract Whisper is Pausable, AccessControl {
     }
 
     modifier nameNotTaken(string memory _name) {
-        if (ENS[_name].addr != address(0)) {
+        if (ENS[_name].addr != address(0) ) {
             revert NameTaken();
         }
         _;

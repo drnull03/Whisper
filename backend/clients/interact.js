@@ -1,13 +1,12 @@
 // scripts/interact.js
 const fs = require("fs");
-const path = require("path");
+
 
 
 async function main() {
     const [deployer,secondAccount] = await ethers.getSigners();  // Get the first account (deployer)
     console.log("Interacting with contract from address:", deployer.address);
   
-    // Replace with your deployed contract's address
     
    // const whisperAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Provide the actual address here
   

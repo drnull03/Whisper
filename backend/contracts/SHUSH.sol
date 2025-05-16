@@ -6,19 +6,51 @@ import "@openzeppelin/contracts/access/AccessControl.sol";       // Role‐based
 import "@openzeppelin/contracts/utils/Pausable.sol";             // Pausable checks
 
 error UrNotWhisper();
+error ShushIsNonTransferable();
+error AlreadyClaimedShushToken(address user);
 
 contract SHUSH is ERC20, AccessControl, Pausable {
+    event WhisperUpdated(address indexed newWhisper);
+    event Claimed(address indexed user);
+    event Burned(address indexed user,uint256 amount);
+
+
+
+
     address public WhisperContract;
     mapping(address => bool) public hasClaimed;
 
-    constructor() ERC20("SHUSH Token", "SHUSH") {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
+    modifier onlyWhisper() {
+        if (msg.sender != WhisperContract) revert UrNotWhisper();
+        _;
     }
+
 
     /// @notice Set the only external contract allowed to mint/burn
     function setWhisper(address _whisper) external onlyRole(DEFAULT_ADMIN_ROLE) {
         WhisperContract = _whisper;
+        emit WhisperUpdated(_whisper);
     }
+
+
+   modifier firstTimeClaim(address user) {
+    if(hasClaimed[user]){
+        revert AlreadyClaimedShushToken(user);
+    }
+    _;
+   }
+
+
+    
+
+
+    constructor() ERC20("SHUSH Token", "SHUSH") {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        WhisperContract=msg.sender;
+    }
+
+    
 
     /// @notice Pause all token moves
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -30,21 +62,20 @@ contract SHUSH is ERC20, AccessControl, Pausable {
         _unpause();
     }
 
-    modifier onlyWhisper() {
-        if (msg.sender != WhisperContract) revert UrNotWhisper();
-        _;
-    }
+    
 
     /// @notice One-time claim of 100 SHUSH, only via Whisper
-    function claimInitial(address user) external onlyWhisper {
-        require(!hasClaimed[user], "Already claimed");
-        hasClaimed[user] = true;
-        _mint(user, 100 * 10 ** decimals());
+    function claimInitial(address _user) external onlyWhisper firstTimeClaim(_user) {
+        
+        hasClaimed[_user] = true;
+        _mint(_user, 100 * 10 ** decimals());
+        emit Claimed(_user);
     }
 
     /// @notice Burn SHUSH from any user, only via Whisper
-    function burnFrom(address from, uint256 amount) external onlyWhisper {
-        _burn(from, amount);
+    function burnFrom(address _from, uint256 _amount) external onlyWhisper {
+        _burn(_from, _amount);
+        emit Burned(_from,_amount);
     }
 
     /// @dev Central hook for all balance changes; block transfers
@@ -52,14 +83,13 @@ contract SHUSH is ERC20, AccessControl, Pausable {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override whenNotPaused onlyWhisper {
+    ) internal virtual override whenNotPaused  {
         // Allow minting (from == zero), burning (to == zero), or calls from WhisperContract
         if (
             from != address(0) &&           // not mint
-            to   != address(0) &&           // not burn
-            msg.sender != WhisperContract   // not our controller
+            to   != address(0)            // not burn    
         ) {
-            revert("SHUSH is non-transferable");
+            revert ShushIsNonTransferable();
         }
         super._update(from, to, amount);
     }

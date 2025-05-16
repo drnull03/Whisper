@@ -5,22 +5,24 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 // This version doesn't include logic for the SHUSH token
-error ZeroAddressNotAllowed();
+
 error UserDoesNotExist(address user);
 error NameTaken();
 error NotOwnerOfSendningDomain(string name);
 error SpammerSendingNotAllowed();
+error EmptyStringNotAllowed(string fieldName);
 
 interface ISHUSH {
     function balanceOf(address user) external view returns (uint256);
 
     function burnFrom(address user, uint256 amount) external;
+
+    function claimInitial(address _user) external ;
 }
 
 contract Whisper is Pausable, AccessControl {
-    uint256 public reportStake = 5 * 10 ** 18;
-
     //ERC20 related stuff
+    uint256 public reportStake = 5 * 10 ** 18;
     ISHUSH public shushToken;
     uint256 public minRequiredBalance = 40 * 10 ** 18;
     uint256 public spamPenalty = 10 * 10 ** 18;
@@ -30,16 +32,17 @@ contract Whisper is Pausable, AccessControl {
     //since it’s an immutable, timestamped record on the blockchain.
     event EmailSent(string indexed from, string indexed to);
     //hiding the reporter identity for his benefit
-    event SpamReported(address indexed reported);
-
-    //define user role
-    //bytes32 public constant USER_ROLE = keccak256("USER_ROLE");
+    event SpamReported(string indexed reported);
+    event EncryptionKeyUpdated(address indexed user, string indexed newKey);
+    event RegisteredNewUser(string indexed name);
 
     //define email address structure
 
     //notice we did seperate mandatory email header from the actual email
 
     //we will need some client side processing to remove the headers after decryption
+
+
 
     struct Email {
         string sender;
@@ -54,11 +57,20 @@ contract Whisper is Pausable, AccessControl {
         string encryptionPublicKey;
     }
 
+
+
+
     //the deployer is the owner
     constructor(address _shushToken) {
+        require(_shushToken != address(0), "Invalid token address");
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         shushToken = ISHUSH(_shushToken);
     }
+
+
+
+
+
 
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
@@ -68,24 +80,19 @@ contract Whisper is Pausable, AccessControl {
         _unpause();
     }
 
-    //old modifiers this cost more gas bad !!!!
-    /*
-    modifier nonZeroAddress(address _addr) {
-        require(_addr != address(0), "zero address not allowed");
-        _;
-    }
     
-    modifier userExist(address _addr){
-        require(hasInbox[_addr]  == true ,"User do nit exist!!");
-        _;
 
-    }
-    */
 
-    modifier nonZeroAddress(address _addr) {
-        if (_addr == address(0)) revert ZeroAddressNotAllowed();
-        _;
+
+
+
+    modifier noEmptyString(string memory str, string memory fieldName) {
+    if (bytes(str).length == 0) {
+        revert EmptyStringNotAllowed(fieldName);
     }
+    _;
+}
+ 
 
     modifier userExist(address _addr) {
         if (!hasInbox[_addr]) {
@@ -131,7 +138,7 @@ contract Whisper is Pausable, AccessControl {
     function registerUser(
         string memory _name,
         string memory _encryptionPubKey
-    ) public nameNotTaken(_name) whenNotPaused {
+    ) public nameNotTaken(_name) noEmptyString(_name,"Name Field") noEmptyString(_encryptionPubKey,"Encryption Key Feild") whenNotPaused {
         //might add payment for registary later
         hasInbox[msg.sender] = true;
         Identity memory identity = Identity({
@@ -139,6 +146,8 @@ contract Whisper is Pausable, AccessControl {
             encryptionPublicKey: _encryptionPubKey
         });
         ENS[_name] = identity;
+        shushToken.claimInitial(msg.sender);
+        emit RegisteredNewUser(_name);
     }
 
     //this function is safe because msg.sender is safe in the first place because
@@ -175,19 +184,28 @@ contract Whisper is Pausable, AccessControl {
         delete Sent[msg.sender];
     }
 
-    function reportSpam(address _sender) external {
+
+
+
+
+    function reportSpam(string memory _sender) external whenNotPaused {
         // Optional: require reporter to stake some SHUSH too
         shushToken.burnFrom(msg.sender, reportStake);
-        shushToken.burnFrom(_sender, spamPenalty);
+        shushToken.burnFrom(ENS[_sender].addr, spamPenalty);
         emit SpamReported(_sender);
     }
 
-    event EncryptionKeyUpdated(address user, string newKey);
+
+    
+
+
+
+    
 
     function updateEncryptionKey(
         string memory _newKey,
         string memory _name
-    ) public nameOwner(_name) whenNotPaused {
+    ) public nameOwner(_name) noEmptyString(_newKey,"New Key Feild") whenNotPaused  {
         ENS[_name].encryptionPublicKey = _newKey;
         emit EncryptionKeyUpdated(msg.sender, _newKey);
     }
@@ -211,7 +229,7 @@ contract Whisper is Pausable, AccessControl {
         string memory _from,
         string memory _to,
         string memory _ipfsCID
-    ) public nameOwner(_from) whenNotPaused {
+    ) public nameOwner(_from) noEmptyString(_ipfsCID,"IPFS CID Feild") whenNotPaused {
         // nameOwner replaced userExist() it check for existance + make sure he owns the name// userExist(msg.sender) is very important we make sure the user exist + he owns the account because msg.sender is safe
 
         //we didn't use userExist modifier because we want the reolved address multiple times.
@@ -219,6 +237,9 @@ contract Whisper is Pausable, AccessControl {
         //make sure it exist as user in the system
         if (recipientAddr == address(0)) {
             revert UserDoesNotExist(recipientAddr);
+        }
+        if(shushToken.balanceOf(recipientAddr) < minRequiredBalance){
+            revert SpammerSendingNotAllowed();
         }
 
         Email memory email = Email({
@@ -230,6 +251,7 @@ contract Whisper is Pausable, AccessControl {
 
         Inbox[recipientAddr].push(email);
         Sent[msg.sender].push(email);
+
         emit EmailSent(_from, _to); // used for proof of sending
     }
 }

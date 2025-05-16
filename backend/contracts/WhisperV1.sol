@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 // This version doesn't include logic for the SHUSH token
 error ZeroAddressNotAllowed();
-error UserDoesNotExist(address user);
-
+error UserDoNotExist(address user);
+error AlreadyHaveAnAccount(address user);
 
 
 
@@ -72,11 +72,17 @@ contract Whisper is Pausable,AccessControl{
 
     modifier userExist(address _addr) {
     if (!hasInbox[_addr]) {  // Checks if `hasInbox[_addr]` is false
-        revert UserDoesNotExist(_addr); // Reverts with custom error
+        revert UserDoNotExist(_addr); // Reverts with custom error
     }
     _;
     }
 
+    modifier doesNotHaveAnAccount(address _addr) {
+        if(hasInbox[_addr]){
+            revert AlreadyHaveAnAccount(_addr);
+        }
+        _;
+    }
     
     //very important mapping every user address has an array of Emails
     mapping(address => Email[]) private Inbox;
@@ -88,7 +94,7 @@ contract Whisper is Pausable,AccessControl{
     //tracking existance versus non-empty
     mapping(address => bool) private hasInbox;
     
-    function registerUser() public whenNotPaused {
+    function registerUser() public whenNotPaused doesNotHaveAnAccount(msg.sender){
         hasInbox[msg.sender] = true;
     }
 
