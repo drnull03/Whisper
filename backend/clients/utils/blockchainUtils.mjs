@@ -1,13 +1,50 @@
 
-import fs from 'fs'
+import fs, { read } from 'fs'
 import { generateKeys } from "./encryptionUtils.mjs"
 
-let ourAddress;
+
+
+
+Array.prototype.last = function () {
+    if (this.length != 0) {
+        return this[this.length - 1];
+    }
+    else {
+        return 0;
+    }
+};
+
+const addresses = await ethers.getSigners();
+const ourAddress = addresses[4];
 let whisper;
 let shush;
-let whisperAddress;
-let shushAddress;
-let snapshotId;
+
+let snapshots = [];
+
+async function readSnapShots() {
+
+    const data = fs.readFileSync('snapshots.json');
+    snapshots = JSON.parse(data);
+    if(snapshots.length == 0){
+        
+        
+        await takeSnapShot("First Deployment");
+    }
+    
+
+}
+
+await readSnapShots();
+
+///////////////////////////////////////
+
+
+
+
+
+
+
+
 
 async function getBalances() {
 
@@ -24,12 +61,12 @@ async function getBalances() {
 }
 
 
-function getContractAddress() {
+function getContractAddresses() {
     //using absolute path because it is only for demo
     const deployed_addresses = JSON.parse(fs.readFileSync("/home/drnull/Whisper/backend/ignition/deployments/chain-31337/deployed_addresses.json"));
-    whisperAddress = deployed_addresses['WhisperV3Module#Whisper'];
-    shushAddress = deployed_addresses['WhisperV3Module#SHUSH'];
-
+    const whisperAddress = deployed_addresses['WhisperV3Module#Whisper'];
+    const shushAddress = deployed_addresses['WhisperV3Module#SHUSH'];
+    
 
     return { whisperAddress, shushAddress };
 }
@@ -39,29 +76,17 @@ function getContractAddress() {
 
 
 
-async function getUser() {
-    //gonna add randomness later
-    const addresses = await ethers.getSigners();
-    const randomInt = Math.floor(Math.random() * (10 - 5 + 1)) + 5;
-    ourAddress = addresses[randomInt];
 
-
-    return ourAddress;
-}
-
-
-async function attachContracts() {
-    try{
-    const Whisper = await ethers.getContractFactory("contracts/WhisperV3.sol:Whisper");
-    whisper = await Whisper.attach(whisperAddress);
-    const Shush = await ethers.getContractFactory("SHUSH");
-    shush = await Shush.attach(shushAddress);
+async function setUpContracts() {
     
-    return { whisper, shush };
-    }catch(error){
-        console.log("There is no whisper contract at this address");
-        return 0;
-    }
+        const { whisperAddress, shushAddress } = getContractAddresses();
+        const Whisper = await ethers.getContractFactory("contracts/WhisperV3.sol:Whisper");
+        whisper = await Whisper.attach(whisperAddress);
+        const Shush = await ethers.getContractFactory("SHUSH");
+        shush = await Shush.attach(shushAddress);
+
+        return { whisper, shush };
+    
 }
 
 
@@ -69,9 +94,15 @@ async function attachContracts() {
 
 
 async function registerMe(email, publicKey) {
-    const whisperWithMainAccount = whisper.connect(ourAddress);
-    await whisperWithMainAccount.registerUser(email, publicKey);
+    await whisper.connect(ourAddress).registerUser(email, publicKey);
 
+
+}
+
+
+async function setUpFixture() {
+    const { publicKey: myPubKey } = generateKeys();
+    await registerMe("diaa@whisper.eth", myPubKey);
 }
 
 
@@ -98,85 +129,78 @@ async function registerThreeUsers() {
 }
 
 
-async function setUpFirstLevelFixture() {
-    getContractAddress();
-    await attachContracts();
-    
-
-}
 
 
-async function setUpSecondLevelFixture(){
-    const { publicKey: myPubKey } = generateKeys();
-    await getUser();
-    await registerMe("diaa@whisper.eth", myPubKey);
-    await registerThreeUsers();
-}
 
 
-async function takeSnapShot() {
-    snapshotId = await network.provider.send("evm_snapshot");
 
+
+async function takeSnapShot(message) {
+    const snapshotId = await network.provider.send("evm_snapshot");
+    //console.log(typeof(snapshotId));
+    snapshots.push({ snapshotId, message });
+    await saveSnapShots();
 }
 
 async function revertLatestSnapShot() {
+    const { snapshotId } = snapshots.last();
+   // console.log(typeof(snapshotId));
     if (snapshotId) {
         await network.provider.send("evm_revert", [snapshotId]);
+        snapshots.pop();
+        await saveSnapShots();
     } else {
-        await network.provider.send("hardhat_reset");
+        console.log("error no SnapShot yet !!!");
     }
+
+}
+
+
+
+async function saveSnapShots() {
+    fs.writeFileSync('snapshots.json', JSON.stringify(snapshots, null, 2));
+    //console.log("Saved snapshots to file.");
+
+}
+
+
+
+async function restorInitalState(){
+const { snapshotId } = snapshots[0];
+await network.provider.send("evm_revert", [snapshotId]);
+await clearSnapShots();
+}
+
+
+//should not best used manually
+async function clearSnapShots() {
+    snapshots = []; // clear in memory
+
+    fs.writeFileSync('snapshots.json', JSON.stringify([], null, 2));
+    console.log("snapshots cleared !!!!");
 }
 
 async function main() {
 
 
 
-
-await setUpFirstLevelFixture();
-const pubKey=await whisper.connect(ourAddress).getPublicKeyOf("diaa@whisper.eth");
-console.log(pubKey);
-
-
+await setUpContracts();
+await setUpFixture();
+await revertLatestSnapShot();
+await setUpFixture();
 
 
 
 
-    /*
-    
-    
-    
-    
-    
-  
-    
-  
-    
-    
-    
-    
-    
-    
-    
-    
-  
-    
-    
-    //await whisper.registerUser("diaa@Whisper.com","diaaPublicKey");
-    
-    const WhisperWithSecondAccount = whisper.connect(secondAccount);
-    //await WhisperWithSecondAccount.registerUser("nawar@Whisper.eth","nawarPublicKey");
-    await WhisperWithSecondAccount.sendEmail("nawar@Whisper.eth","diaa@Whisper.com","hello f");
 
-    sent = await WhisperWithSecondAccount.getSent();
-    console.log("sent",sent);
-    
-    //inbox = await whisper.getInbox();
-    //console.log("inbox",inbox);
-    //inbox = await whisper.getInbox();
-    //console.log("inbox",inbox);
-    
-    
-  */
+
+
+
+
+
+
+
+
 
 }
 
