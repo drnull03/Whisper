@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode colors based on provided palette */
+    --background: 210 100% 98%;
+    --foreground: 210 10% 11%;
+
+    --card: 210 100% 98%;
+    --card-foreground: 210 10% 11%;
+
+    --popover: 210 100% 98%;
+    --popover-foreground: 210 10% 11%;
+
+    --primary: 200 65% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 204 17% 37%;
+    --secondary-foreground: 0 0% 100%;
+
+    --tertiary: 260 24% 43%;
+    --tertiary-foreground: 0 0% 100%;
+    --tertiary-container: 260 100% 93%;
+    --on-tertiary-container: 260 20% 33%;
+
+    --muted: 210 20% 89%;
+    --muted-foreground: 210 8% 28%;
+
+    --accent: 210 20% 89%;
+    --accent-foreground: 210 8% 28%;
+
+    --destructive: 0 86% 42%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 204 6% 47%;
+    --input: 204 6% 47%;
+    --ring: 200 65% 32%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark mode colors based on provided palette */
+    --background: 210 15% 8%;
+    --foreground: 210 10% 89%;
+
+    --card: 210 15% 8%;
+    --card-foreground: 210 10% 89%;
+
+    --popover: 210 15% 8%;
+    --popover-foreground: 210 10% 89%;
+
+    --primary: 200 80% 76%;
+    --primary-foreground: 200 100% 14%;
+
+    --secondary: 204 20% 78%;
+    --secondary-foreground: 204 30% 18%;
+
+    --tertiary: 260 50% 83%;
+    --tertiary-foreground: 260 25% 24%;
+    --tertiary-container: 260 20% 33%;
+    --on-tertiary-container: 260 100% 93%;
+
+    --muted: 210 6% 28%;
+    --muted-foreground: 210 6% 80%;
+
+    --accent: 210 6% 28%;
+    --accent-foreground: 210 6% 80%;
+
+    --destructive: 6 100% 83%;
+    --destructive-foreground: 0 100% 21%;
+
+    --border: 210 4% 56%;
+    --input: 210 4% 56%;
+    --ring: 200 80% 76%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom styles for email content in dark mode */
+.dark .prose {
+  --tw-prose-body: hsl(var(--foreground));
+  --tw-prose-headings: hsl(var(--foreground));
+  --tw-prose-lead: hsl(var(--muted-foreground));
+  --tw-prose-links: hsl(var(--primary));
+  --tw-prose-bold: hsl(var(--foreground));
+  --tw-prose-counters: hsl(var(--muted-foreground));
+  --tw-prose-bullets: hsl(var(--muted-foreground));
+  --tw-prose-hr: hsl(var(--border));
+  --tw-prose-quotes: hsl(var(--foreground));
+  --tw-prose-quote-borders: hsl(var(--border));
+  --tw-prose-captions: hsl(var(--muted-foreground));
+  --tw-prose-code: hsl(var(--foreground));
+  --tw-prose-pre-code: hsl(var(--foreground));
+  --tw-prose-pre-bg: hsl(var(--muted));
+  --tw-prose-th-borders: hsl(var(--border));
+  --tw-prose-td-borders: hsl(var(--border));
+}

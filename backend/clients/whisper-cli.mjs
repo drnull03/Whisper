@@ -1,71 +1,57 @@
-import fs from 'fs';
-import { createMimeMessage } from 'mimetext' // Import the MimeText package using ES Modules
+
+// Import the MimeText package using ES Modules
 import { simpleParser } from 'mailparser';
-import fs from 'fs';
-
-
-
-function encodeFileToBase64(imagePath) {
-  // Read the image file into a buffer
-  const imageBuffer = fs.readFileSync(imagePath);
-
-  // Convert the buffer to a base64 encoded string
-  return imageBuffer.toString('base64');
-}
+import NodeRSA from 'node-rsa';
+import { performance } from 'perf_hooks';
+import { promisify } from 'util';
 
 
 
 
-function createEmail(sender, recipient, subject, text) {
-  const msg = createMimeMessage()
-  msg.setSender(sender)
-  msg.setRecipients(recipient)
-  msg.setSubject(subject)
-
-  msg.addMessage({
-    contentType: 'text/plain',
-    data: text
-  })
-  return msg;
-}
-
-
-function addCC(msg, _cc) {
-  msg.setRecipient(_cc, { type: 'Cc' })
-
-}
-
-function addBCC(msg, _bcc) {
-  msg.setRecipient(_bcc, { type: 'Bcc' })
-}
-
-
-function addImage(msg, base64Image, filename) {
-  msg.addAttachment({
-    filename: filename,
-    contentType: 'image/jpg',
-    data: base64Image
-  })
-
-}
-
-function addText(msg, base64Text, filename) {
-  msg.addAttachment({
-    filename: filename,
-    contentType: 'text/plain',
-    data: base64Text
-  })
-}
+function generateKeys() {
+  //intentionally set it to 1024 for speed encryption and demo purposes
+  const key = new NodeRSA({ b: 1024 });
+  const publicKey = key.exportKey('public');
+  const privateKey = key.exportKey('private');
 
 
 
-function addFile(msg, base64Data, filename, contentType = 'application/octet-stream') {
-  msg.addAttachment({
-    filename,
-    contentType,
-    data: base64Data,
+  const encryptor = new NodeRSA(publicKey, {
+    encryptionScheme: 'pkcs1_oaep',
+    environment: 'node'
   });
+
+  const decryptor = new NodeRSA(privateKey, {
+    encryptionScheme: 'pkcs1_oaep',
+    environment: 'node'
+  });
+
+
+
+  encryptor.encryptAsync = promisify(encryptor.encrypt.bind(encryptor));
+  decryptor.decryptAsync = promisify(decryptor.decrypt.bind(decryptor));
+
+  return { encryptor, decryptor };
 }
+
+
+async function encryptText(encryptor, text) {
+
+return await encryptor.encryptAsync(text,'base64');
+}
+
+
+
+async function decryptText(decryptor,text){
+
+  return await decryptor.decryptAsync(text,'utf-8');
+}
+
+
+
+const {encryptor,decryptor}=generateKeys();
+
+
 
 
 
