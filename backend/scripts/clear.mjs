@@ -1,6 +1,6 @@
 import fs, { read } from 'fs'
 
-const path = '../clients/utils/snapshots.json'
+const path = '../clients/snapshots.json'
 
 async function main() {
 
@@ -13,7 +13,7 @@ async function main() {
     //const message = 'Deployed State';
     //snapshots.push({snapshotId,message});
     fs.writeFileSync(path, JSON.stringify([], null, 2));
-    console.log("Cleared Snapshot !!!");
+    console.log("Cleared Snapshots !!!");
 
 
 

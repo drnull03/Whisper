@@ -15,3 +15,5 @@
 **/ipfs-cluster-service/
 **/compose/
 **/kubo/
+**/ignition/deployments/
+**/snapshots.json

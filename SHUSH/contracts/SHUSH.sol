@@ -1,100 +1,90 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.28;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";         // ERC-20 core
+import "@openzeppelin/contracts/access/AccessControl.sol";       // Role‐based access
+import "@openzeppelin/contracts/utils/Pausable.sol";             // Pausable checks
 
-contract SHUSH is ERC20, Ownable {
-    // Anti-spam parameters
-    uint256 public constant INITIAL_BALANCE = 100 ether; // 20 SHUSH (18 decimals)
-    uint256 public constant SPAM_PENALTY = 20 ether; // Penalty per spam flag
-    uint256 public constant INACTIVITY_REWARD = 5 ether; // Daily reward
-    uint256 public constant REGENERATION_RATE = 10 ether; // Weekly regeneration
+error UrNotWhisper();
+error ShushIsNonTransferable();
 
-    // Access tiers
-    uint256 public constant FULL_ACCESS = 50 ether;
-    uint256 public constant RATE_LIMITED = 20 ether;
 
-    // User tracking
-    mapping(address => uint256) public lastActivityTime;
-    mapping(address => uint256) public lastRegenerationTime;
+contract SHUSH is ERC20, AccessControl, Pausable {
+    event WhisperUpdated(address indexed newWhisper);
+    event Claimed(address indexed user);
+    event Burned(address indexed user,uint256 amount);
 
-    // Whisper system address (can deduct/add tokens)
-    address public whisperSystem;
 
-    constructor() ERC20("SHUSH", "SHS") Ownable(msg.sender) {
-        _mint(msg.sender, 1_000_000 * 10**18); // 1 million initial supply
-    }
 
-    // Only Whisper system can call this
+
+    address public WhisperContract;
+    mapping(address => bool) public hasClaimed;
+
+
     modifier onlyWhisper() {
-        require(msg.sender == whisperSystem, "Not Whisper system");
+        if (msg.sender != WhisperContract) revert UrNotWhisper();
         _;
     }
 
-    // Set Whisper system address (admin-only)
-    function setWhisperSystem(address _system) external onlyOwner {
-        whisperSystem = _system;
+
+    /// @notice Set the only external contract allowed to mint/burn
+    function setWhisper(address _whisper) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        WhisperContract = _whisper;
+        emit WhisperUpdated(_whisper);
     }
 
-    // Mint initial balance for new users (callable by Whisper)
-    function mintInitial(address user) external onlyWhisper {
-        _mint(user, INITIAL_BALANCE);
-        lastActivityTime[user] = block.timestamp;
-        lastRegenerationTime[user] = block.timestamp;
+
+
+
+    
+
+
+    constructor() ERC20("SHUSH Token", "SHUSH") {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        WhisperContract=msg.sender;
     }
 
-    // Penalize spammer (deduct SHUSH)
-    function penalize(address spammer) external onlyWhisper {
-        _burn(spammer, SPAM_PENALTY);
-        lastActivityTime[spammer] = block.timestamp;
+    
+
+    /// @notice Pause all token moves
+    function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause();
     }
 
-    // Reward for reporting spam/inactivity
-    function reward(address user, uint256 amount) external onlyWhisper {
-        _mint(user, amount);
-        lastActivityTime[user] = block.timestamp;
+    /// @notice Unpause token moves
+    function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
     }
 
-    // Regenerate SHUSH over time (1/week)
-    function regenerate(address user) public {
-        require(
-            block.timestamp >= lastRegenerationTime[user] + 1 weeks,
-            "Wait 1 week"
-        );
-        if (balanceOf(user) < INITIAL_BALANCE) {
-            _mint(user, REGENERATION_RATE);
-        }
-        lastRegenerationTime[user] = block.timestamp;
-    }
+    
 
-    // Override ERC-20 transfers to make non-transferable
-    function _update(address from, address to, uint256 amount) internal virtual override {
-        require(
-            from == address(0) || to == address(0) || msg.sender == whisperSystem,
-            "SHUSH is non-transferable"
-        );
-        super._update(from, to, amount);
+    /// @notice One-time claim of 100 SHUSH, only via Whisper
+    function claimInitial(address _user) external onlyWhisper  {
         
-        // Update activity timestamp for both parties
-        if (from != address(0)) {
-            lastActivityTime[from] = block.timestamp;
-        }
-        if (to != address(0)) {
-            lastActivityTime[to] = block.timestamp;
-        }
+        hasClaimed[_user] = true;
+        _mint(_user, 100 * 10 ** decimals());
+        emit Claimed(_user);
     }
 
-    // Check user's access tier
-    function getAccessTier(address user) public view returns (string memory) {
-        uint256 balance = balanceOf(user);
-        if (balance >= FULL_ACCESS) return "Full";
-        if (balance >= RATE_LIMITED) return "Rate-Limited";
-        return "Blocked";
+    /// @notice Burn SHUSH from any user, only via Whisper
+    function burnFrom(address _from, uint256 _amount) external onlyWhisper {
+        _burn(_from, _amount);
+        emit Burned(_from,_amount);
     }
 
-    // Helper function to check if user can send emails
-    function canSendEmails(address user) public view returns (bool) {
-        return balanceOf(user) >= RATE_LIMITED;
+    /// @dev Central hook for all balance changes; block transfers
+    function _update(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override whenNotPaused  {
+        // Allow minting (from == zero), burning (to == zero), or calls from WhisperContract
+        if (
+            from != address(0) &&           // not mint
+            to   != address(0)            // not burn    
+        ) {
+            revert ShushIsNonTransferable();
+        }
+        super._update(from, to, amount);
     }
 }
