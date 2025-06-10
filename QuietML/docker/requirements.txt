@@ -1,3 +1,0 @@
-joblib
-scikit-learn
-Flask
