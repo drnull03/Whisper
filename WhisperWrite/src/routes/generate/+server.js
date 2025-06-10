@@ -32,6 +32,8 @@ export const POST = async ({ request }) => {
         return json({ status: false, message: "Error occurred, try again." });
     }
 
+
+    //some error checking on these might be good
     const generatedEmail = completion.choices[0].message.content;
     const rawCompletion = completion;
     const { usage } = completion;

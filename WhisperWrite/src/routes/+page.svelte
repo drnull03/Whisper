@@ -1,5 +1,8 @@
 <script>
     const generateEmail = () => {
+        //dk if deepseek api accept all kind of input
+        //but a check here is required
+        //for sanitization purposes 
         if(!contextInputValue || !promptInputValue) {
             alert("Input valid data");
             return;
@@ -26,12 +29,17 @@
         .catch(err => console.log(err));
     }
 
-    let contextInputValue = "";
-    let promptInputValue = "";
-    let isGenerating = false;
+    let contextInputValue = $state("");
+    let promptInputValue = $state("");
+    let isGenerating = $state(false);
 
-    let email = ``;
+    let email = $state(``);
 </script>
+
+
+
+
+
 
 <main class="fs-300">
     <h1>Email generation service w/ DeepSeek API</h1>
@@ -43,7 +51,7 @@
             <p>It might take a minute, be patient.</p>
         </div>
     {:else}
-        <button on:click={generateEmail}>Generate Email</button>
+        <button onclick={generateEmail}>Generate Email</button>
     {/if}
     {#if email}
         <h2>Generated email</h2>
@@ -83,6 +91,11 @@
 &#125</pre>
     </div>
 </main>
+
+
+
+
+
 
 <style>
     main {
