@@ -10,11 +10,24 @@ def detect_spam(email_text):
 
     # Make a prediction using the loaded classifier
     prediction = clf_loaded.predict([email_text])
+    probabilities = clf_loaded.predict_proba([email_text])
+    
+    # The probability of being spam (class 1) is usually the second element
+    spam_probability = probabilities[0][1] 
+    
+    # The probability of being ham (class 0) is usually the first element
+    ham_probability = probabilities[0][0]
+
 
     if prediction == 0:
-        return "This is a Ham Email!"
+        output_message = "This is a Ham Email!"
     else:
-        return "This is a Spam Email!"
+        output_message = "This is a Spam Email!"
+    
+    output_message += f"\nProbability (Ham): {ham_probability:.4f}"
+    output_message += f"\nProbability (Spam): {spam_probability:.4f}"
+
+    return output_message
 
 
 # Example of how to use the function
