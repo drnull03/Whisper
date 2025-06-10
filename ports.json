@@ -1,0 +1,9 @@
+{
+  "PORTS": {
+    "hardhat": 8545,
+    "ipfs": 5001,
+    "QuietML": 5000,
+    "whisper-write": 5174,
+    "UI": 3000
+  }
+}
