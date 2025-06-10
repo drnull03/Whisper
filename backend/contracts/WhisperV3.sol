@@ -11,16 +11,34 @@ error NameTaken();
 error NotOwnerOfSendningDomain(string name);
 error SpammerSendingNotAllowed();
 error EmptyStringNotAllowed(string fieldName);
+error InvalidEmailSuffix();
+error EmailTooLong();
+error EmailTooShort();
+error InvalidCharcter();
+
+library EmailUtils {
+    function isValidCharacter(bytes1 char) internal pure returns (bool) {
+        // Allow a-z, A-Z, 0-9, dot, underscore
+        return ((char >= 0x30 && char <= 0x39) || // 0-9
+            (char >= 0x41 && char <= 0x5A) || // A-Z
+            (char >= 0x61 && char <= 0x7A) || // a-z
+            (char == 0x2E) || // .
+            (char == 0x5F)); // _
+    }
+}
 
 interface ISHUSH {
     function balanceOf(address user) external view returns (uint256);
 
     function burnFrom(address user, uint256 amount) external;
 
-    function claimInitial(address _user) external ;
+    function claimInitial(address _user) external;
 }
 
 contract Whisper is Pausable, AccessControl {
+    //using the library for char
+    using EmailUtils for bytes1;
+
     //ERC20 related stuff
     uint256 public reportStake = 5 * 10 ** 18;
     ISHUSH public shushToken;
@@ -42,8 +60,6 @@ contract Whisper is Pausable, AccessControl {
 
     //we will need some client side processing to remove the headers after decryption
 
-
-
     struct Email {
         string sender;
         string recipient;
@@ -57,20 +73,12 @@ contract Whisper is Pausable, AccessControl {
         string encryptionPublicKey;
     }
 
-
-
-
     //the deployer is the owner
     constructor(address _shushToken) {
         require(_shushToken != address(0), "Invalid token address");
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         shushToken = ISHUSH(_shushToken);
     }
-
-
-
-
-
 
     function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
         _pause();
@@ -80,24 +88,16 @@ contract Whisper is Pausable, AccessControl {
         _unpause();
     }
 
-    
-
-
-
-
-
     modifier noEmptyString(string memory str, string memory fieldName) {
-    if (bytes(str).length == 0) {
-        revert EmptyStringNotAllowed(fieldName);
+        if (bytes(str).length == 0) {
+            revert EmptyStringNotAllowed(fieldName);
+        }
+        _;
     }
-    _;
-}
- 
 
     modifier userExist(address _addr) {
-        if (!hasInbox[_addr]) {
-            // Checks if `hasInbox[_addr]` is false
-            revert UserDoesNotExist(_addr); // Reverts with custom error
+        if (bytes(ReverseENS[_addr]).length == 0) {
+            revert UserDoesNotExist(_addr);
         }
         _;
     }
@@ -122,6 +122,39 @@ contract Whisper is Pausable, AccessControl {
         _;
     }
 
+    modifier validWhisperEmail(string memory email) {
+        bytes memory emailBytes = bytes(email);
+        bytes memory suffix = bytes("@whisper.eth");
+        //max email size part is 10
+        if (emailBytes.length > 22) {
+            revert EmailTooLong();
+        }
+
+        if (emailBytes.length <= suffix.length) {
+            revert EmailTooShort();
+        }
+
+        // Check suffix match
+        for (uint i = 0; i < suffix.length; i++) {
+            if (
+                emailBytes[emailBytes.length - suffix.length + i] != suffix[i]
+            ) {
+                revert InvalidEmailSuffix();
+            }
+        }
+        //check the name part without the suffixuint localLength = len - suffix.length;
+        uint256 len = emailBytes.length;
+        uint localLength = len - suffix.length;
+
+        for (uint i = 0; i < localLength; i++) {
+            if (!emailBytes[i].isValidCharacter()) {
+                revert InvalidCharcter();
+            }
+        }
+
+        _;
+    }
+
     //very important mapping every user address has an array of Emails
     mapping(address => Email[]) private Inbox;
 
@@ -130,17 +163,26 @@ contract Whisper is Pausable, AccessControl {
 
     //used to track if an address has an inbox
     //tracking existance versus non-empty
-    mapping(address => bool) private hasInbox;
+    //mapping(address => bool) private hasInbox;
 
     //email name lookup
     mapping(string => Identity) public ENS;
+    //made this private for protecting users :)
+    mapping(address => string) private ReverseENS;
 
     function registerUser(
         string memory _name,
         string memory _encryptionPubKey
-    ) public nameNotTaken(_name) noEmptyString(_name,"Name Field") noEmptyString(_encryptionPubKey,"Encryption Key Feild") whenNotPaused {
+    )
+        public
+        validWhisperEmail(_name)
+        nameNotTaken(_name)
+        noEmptyString(_encryptionPubKey, "Encryption Key Feild")
+        whenNotPaused
+    {
         //might add payment for registary later
-        hasInbox[msg.sender] = true;
+        //hasInbox[msg.sender] = true;
+        ReverseENS[msg.sender] = _name;
         Identity memory identity = Identity({
             addr: msg.sender,
             encryptionPublicKey: _encryptionPubKey
@@ -148,6 +190,15 @@ contract Whisper is Pausable, AccessControl {
         ENS[_name] = identity;
         shushToken.claimInitial(msg.sender);
         emit RegisteredNewUser(_name);
+    }
+
+    function Login()
+        public
+        view
+        userExist(msg.sender)
+        returns (string memory)
+    {
+        return ReverseENS[msg.sender];
     }
 
     //this function is safe because msg.sender is safe in the first place because
@@ -184,32 +235,27 @@ contract Whisper is Pausable, AccessControl {
         delete Sent[msg.sender];
     }
 
-
-
-
-
-    function reportSpam(string memory _sender) external userExist(ENS[_sender].addr) whenNotPaused {
+    function reportSpam(
+        string memory _sender
+    ) external userExist(ENS[_sender].addr) whenNotPaused {
         // Optional: require reporter to stake some SHUSH too
         shushToken.burnFrom(msg.sender, reportStake);
         shushToken.burnFrom(ENS[_sender].addr, spamPenalty);
         emit SpamReported(_sender);
     }
 
-
-    
-
-
-
-    
-
     function updateEncryptionKey(
         string memory _newKey,
         string memory _name
-    ) public nameOwner(_name) noEmptyString(_newKey,"New Key Feild") whenNotPaused  {
+    )
+        public
+        nameOwner(_name)
+        noEmptyString(_newKey, "New Key Feild")
+        whenNotPaused
+    {
         ENS[_name].encryptionPublicKey = _newKey;
         emit EncryptionKeyUpdated(msg.sender, _newKey);
     }
-
 
     function getPublicKeyOf(
         string memory _name
@@ -222,6 +268,7 @@ contract Whisper is Pausable, AccessControl {
     {
         return ENS[_name].encryptionPublicKey;
     }
+
     //this function create and email in memory of each etheruim node
     //then adds the message to recipient inbox this function is safe because msg.sender is safe we can't send emails in someone's name
 
@@ -229,7 +276,13 @@ contract Whisper is Pausable, AccessControl {
         string memory _from,
         string memory _to,
         string memory _ipfsCID
-    ) public notAspammer nameOwner(_from) noEmptyString(_ipfsCID,"IPFS CID Feild") whenNotPaused {
+    )
+        public
+        notAspammer
+        nameOwner(_from)
+        noEmptyString(_ipfsCID, "IPFS CID Feild")
+        whenNotPaused
+    {
         // nameOwner replaced userExist() it check for existance + make sure he owns the name// userExist(msg.sender) is very important we make sure the user exist + he owns the account because msg.sender is safe
 
         //we didn't use userExist modifier because we want the reolved address multiple times.
@@ -238,7 +291,6 @@ contract Whisper is Pausable, AccessControl {
         if (recipientAddr == address(0)) {
             revert UserDoesNotExist(recipientAddr);
         }
-       
 
         Email memory email = Email({
             sender: _from,

@@ -2,9 +2,15 @@ import { simpleParser } from 'mailparser';
 
 
 function isValidEmail(email) {
-    const whisperEmailRegex = /^[a-zA-Z0-9._%+-]+@whisper\.eth$/;
-    return whisperEmailRegex.test(email);
+  const suffix = '@whisper.eth';
+  const whisperEmailRegex = /^[a-zA-Z0-9._%+-]+@whisper\.eth$/;
+
+  if (!whisperEmailRegex.test(email)) return false;
+
+  const localPart = email.slice(0, -suffix.length);
+  return localPart.length > 0 && localPart.length <= 10;
 }
+
 
 function toString(msg) {
     return msg.asRaw();

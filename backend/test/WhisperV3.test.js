@@ -23,9 +23,9 @@ describe("Whisper Contract", function () {
 
   async function registeredUsersFixture() {
     const fix = await deployContractsFixture();
-    await fix.whisper.connect(fix.user1).registerUser("alice", "pubkey1");
-    await fix.whisper.connect(fix.user2).registerUser("bob", "pubkey2");
-    await fix.whisper.connect(fix.user3).registerUser("charlie","pubkey2");
+    await fix.whisper.connect(fix.user1).registerUser("alice@whisper.eth", "pubkey1");
+    await fix.whisper.connect(fix.user2).registerUser("bob@whisper.eth", "pubkey2");
+    await fix.whisper.connect(fix.user3).registerUser("charlie@whisper.eth","pubkey2");
     return fix;
   }
 
@@ -33,9 +33,9 @@ describe("Whisper Contract", function () {
     it("Should register new user with valid details", async () => {
       const { whisper, shush, user1 } = await loadFixture(deployContractsFixture);
       
-      await expect(whisper.connect(user1).registerUser("alice", "pubkey123"))
+      await expect(whisper.connect(user1).registerUser("alice@whisper.eth", "pubkey123"))
         .to.emit(whisper, "RegisteredNewUser")
-        .withArgs("alice");
+        .withArgs("alice@whisper.eth");
 
       // Verify SHUSH balance after claim
       expect(await shush.balanceOf(user1.address)).to.equal(100n * 10n ** 18n);
@@ -44,8 +44,8 @@ describe("Whisper Contract", function () {
     it("Should prevent duplicate name registration", async () => {
       const { whisper, user1, user2 } = await loadFixture(deployContractsFixture);
       
-      await whisper.connect(user1).registerUser("alice", "pubkey123");
-      await expect(whisper.connect(user2).registerUser("alice", "pubkey456"))
+      await whisper.connect(user1).registerUser("alice@whisper.eth", "pubkey123");
+      await expect(whisper.connect(user2).registerUser("alice@whisper.eth", "pubkey456"))
         .to.be.revertedWithCustomError(whisper, "NameTaken");
     });
     
@@ -53,9 +53,29 @@ describe("Whisper Contract", function () {
       const { whisper, user1 } = await loadFixture(deployContractsFixture);
       
       await expect(whisper.connect(user1).registerUser("", "pubkey123"))
-        .to.be.revertedWithCustomError(whisper, "EmptyStringNotAllowed")
-        .withArgs("Name Field");
+        .to.be.revertedWithCustomError(whisper, "EmailTooShort")
+        
     });
+
+    it("Should login user", async () => {
+      const { whisper, user1 } = await loadFixture(deployContractsFixture);
+      
+      await whisper.connect(user1).registerUser("alice@whisper.eth", "pubkey123");
+      await expect(await whisper.connect(user1).Login()).to.equal("alice@whisper.eth");
+        
+        
+    });
+
+    it("Shouldn't login non existing user", async () => {
+      const { whisper, user1 } = await loadFixture(deployContractsFixture);
+      
+      //await whisper.connect(user1).registerUser("alice@whisper.eth", "pubkey123");
+      await expect(whisper.connect(user1).Login()).to.be.revertedWithCustomError(whisper,"UserDoesNotExist");
+        
+        
+    });
+
+
   });
 
   describe("Email Functionality", () => {
@@ -64,9 +84,9 @@ describe("Whisper Contract", function () {
     it("Should send email between registered users", async () => {
       const { whisper, user1, user2 } = await loadFixture(registeredUsersFixture);
       
-      await expect(whisper.connect(user1).sendEmail("alice", "bob", "QmHash123"))
+      await expect(whisper.connect(user1).sendEmail("alice@whisper.eth", "bob@whisper.eth", "QmHash123"))
         .to.emit(whisper, "EmailSent")
-        .withArgs("alice", "bob");
+        .withArgs("alice@whisper.eth", "bob@whisper.eth");
 
       // Verify inbox updates
       const inbox = await whisper.connect(user2).getInbox();
@@ -76,15 +96,15 @@ describe("Whisper Contract", function () {
     it("Should prevent sending from unowned domain", async () => {
       const { whisper, user1 } = await loadFixture(registeredUsersFixture);
       
-      await expect(whisper.connect(user1).sendEmail("bob", "alice", "QmHash123"))
+      await expect(whisper.connect(user1).sendEmail("bob@whisper.eth", "alice@whisper.eth", "QmHash123"))
         .to.be.revertedWithCustomError(whisper, "NotOwnerOfSendningDomain")
-        .withArgs("bob");
+        .withArgs("bob@whisper.eth");
     });
     
     it("Should block sending to non-existent users", async () => {
       const { whisper, user1 } = await loadFixture(registeredUsersFixture);
       
-      await expect(whisper.connect(user1).sendEmail("alice", "mohmad", "QmHash123"))
+      await expect(whisper.connect(user1).sendEmail("alice@whisper.eth", "mohmad@whisper.eth", "QmHash123"))
         .to.be.revertedWithCustomError(whisper, "UserDoesNotExist");
     });
   });
@@ -92,8 +112,8 @@ describe("Whisper Contract", function () {
   describe("Spam Reporting", () => {
     async function reportedSpamFixture() {
       const fix = await deployContractsFixture();
-      await fix.whisper.connect(fix.user1).registerUser("spammer", "pubkey123");
-      await fix.whisper.connect(fix.reporter).registerUser("reporter", "pubkey456");
+      await fix.whisper.connect(fix.user1).registerUser("spammer@whisper.eth", "pubkey123");
+      await fix.whisper.connect(fix.reporter).registerUser("reporter@whisper.eth", "pubkey456");
       return fix;
     }
 
@@ -101,9 +121,9 @@ describe("Whisper Contract", function () {
       const { whisper, shush, user1, reporter } = await loadFixture(reportedSpamFixture);
       
       const initialReporterBalance = await shush.balanceOf(reporter.address);
-      await expect(whisper.connect(reporter).reportSpam("spammer"))
+      await expect(whisper.connect(reporter).reportSpam("spammer@whisper.eth"))
         .to.emit(whisper, "SpamReported")
-        .withArgs("spammer");
+        .withArgs("spammer@whisper.eth");
 
       // Verify token burns
       expect(await shush.balanceOf(reporter.address))
@@ -116,13 +136,13 @@ describe("Whisper Contract", function () {
   describe("Encryption Keys", () => {
     it("Should update public key properly", async () => {
       const { whisper, user1 } = await loadFixture(deployContractsFixture);
-      await whisper.connect(user1).registerUser("alice", "oldkey");
+      await whisper.connect(user1).registerUser("alice@whisper.eth", "oldkey");
       
-      await expect(whisper.connect(user1).updateEncryptionKey("newkey", "alice"))
+      await expect(whisper.connect(user1).updateEncryptionKey("newkey", "alice@whisper.eth"))
         .to.emit(whisper, "EncryptionKeyUpdated")
         .withArgs(user1.address, "newkey");
 
-      expect(await whisper.getPublicKeyOf("alice")).to.equal("newkey");
+      expect(await whisper.getPublicKeyOf("alice@whisper.eth")).to.equal("newkey");
     });
   });
 
@@ -131,11 +151,11 @@ describe("Whisper Contract", function () {
       const { whisper, admin, user1 } = await loadFixture(deployContractsFixture);
       
       await whisper.connect(admin).pause();
-      await expect(whisper.connect(user1).registerUser("alice", "pubkey123"))
+      await expect(whisper.connect(user1).registerUser("alice@whisper.eth", "pubkey123"))
         .to.be.revertedWithCustomError(whisper, "EnforcedPause");
 
       await whisper.connect(admin).unpause();
-      await expect(whisper.connect(user1).registerUser("alice", "pubkey123"))
+      await expect(whisper.connect(user1).registerUser("alice@whisper.eth", "pubkey123"))
         .not.to.be.reverted;
     });
   });
@@ -144,20 +164,52 @@ describe("Whisper Contract", function () {
 
 
 describe("Extended Registration Tests", () => {
-    it("Should register with maximum length name (1000 chars)", async () => {
+    it("Should register with maximum length name (10 chars)", async () => {
       const { whisper, user1 } = await loadFixture(deployContractsFixture);
-      const longName = "a".repeat(1000);
+      const longName = "a".repeat(10) + "@whisper.eth";
       await expect(whisper.connect(user1).registerUser(longName, "pubkey"))
         .to.emit(whisper, "RegisteredNewUser");
     });
 
-    it("Should register with special characters in name", async () => {
-      const { whisper, user1 } = await loadFixture(deployContractsFixture);
-      const specialName = "!@#$%^&*()_+-=[]{}|;':,./<>?~`";
-      await expect(whisper.connect(user1).registerUser(specialName, "pubkey"))
-        .to.emit(whisper, "RegisteredNewUser");
+    it("Should register with minimum length name (1 char)",async () => {
+      const {whisper, user1} = await loadFixture(deployContractsFixture);
+      const shortName = "a@whisper.eth";
+      await expect(whisper.connect(user1).registerUser(shortName,"pubkey"))
+        .to.emit(whisper,"RegisteredNewUser");
     });
 
+    it("Shouldn't register  0 char email)",async () => {
+      const {whisper, user1} = await loadFixture(deployContractsFixture);
+      const shortName = "@whisper.eth";
+      await expect(whisper.connect(user1).registerUser(shortName,"pubkey"))
+        .to.be.revertedWithCustomError(whisper,"EmailTooShort")
+    });
+
+    it("Shouldn't register  email with the wrong suffix)",async () => {
+      const {whisper, user1} = await loadFixture(deployContractsFixture);
+      const gmailDoamin = "alice@gmail.com";
+      await expect(whisper.connect(user1).registerUser(gmailDoamin,"pubkey"))
+        .to.be.revertedWithCustomError(whisper,"InvalidEmailSuffix")
+    });
+
+    it("Shouldn't register with long email >10 chars", async () => {
+      const { whisper, user1 } = await loadFixture(deployContractsFixture);
+      const longName = "a".repeat(11) + "@whisper.eth";
+      await expect(whisper.connect(user1).registerUser(longName, "pubkey"))
+        .to.be.revertedWithCustomError(whisper,"EmailTooLong");
+    });
+
+    
+    it("Shouldn't register with special characters in name", async () => {
+      const { whisper, user1 } = await loadFixture(deployContractsFixture);
+      const specialName = "!@#$%^&*()+-=[]{}|;':,/<>?~`";
+      for(const char of specialName){
+        const email=char+"@whisper.eth";
+        await expect(whisper.connect(user1).registerUser(email, "pubkey"))
+        .to.be.revertedWithCustomError(whisper,"InvalidCharcter")
+      }
+    });
+    
     it("Should prevent registration without SHUSH setup", async () => {
       const [admin, user1] = await ethers.getSigners();
       const SHUSH = await ethers.getContractFactory("SHUSH");
@@ -165,7 +217,7 @@ describe("Extended Registration Tests", () => {
       const Whisper = await ethers.getContractFactory("contracts/WhisperV3.sol:Whisper");
       const whisper = await Whisper.deploy(shush.getAddress());
       
-      await expect(whisper.connect(user1).registerUser("alice", "pubkey"))
+      await expect(whisper.connect(user1).registerUser("alice@whisper.eth", "pubkey"))
         .to.be.revertedWithCustomError(shush, "UrNotWhisper");
     });
   });
@@ -181,7 +233,7 @@ describe("Extended Registration Tests", () => {
       const { whisper, user1, user2 } = await loadFixture(registeredUsersFixture);
       
       for (let i = 0; i < 100; i++) {
-        await whisper.connect(user1).sendEmail("alice", "bob", `CID${i}`);
+        await whisper.connect(user1).sendEmail("alice@whisper.eth", "bob@whisper.eth", `CID${i}`);
       }
 
       const inbox = await whisper.connect(user2).getInbox();
@@ -192,8 +244,8 @@ describe("Extended Registration Tests", () => {
     it("Should maintain separate inboxes for different users", async () => {
       const { whisper, user1, user2, user3 } = await loadFixture(registeredUsersFixture);
       
-      await whisper.connect(user1).sendEmail("alice", "bob", "CID1");
-      await whisper.connect(user2).sendEmail("bob", "charlie", "CID2");
+      await whisper.connect(user1).sendEmail("alice@whisper.eth", "bob@whisper.eth", "CID1");
+      await whisper.connect(user2).sendEmail("bob@whisper.eth", "charlie@whisper.eth", "CID2");
 
       const bobInbox = await whisper.connect(user2).getInbox();
       const charlieInbox = await whisper.connect(user3).getInbox();
@@ -208,26 +260,26 @@ describe("Extended Registration Tests", () => {
       // Burn bob's tokens below minimum
       //await shush.connect(whisper).burnFrom(user2.address, 70n * 10n ** 18n);
       for(i=0;i<7;i++){
-      await whisper.connect(user1).reportSpam("bob");
+      await whisper.connect(user1).reportSpam("bob@whisper.eth");
       }
       
       await expect(await shush.balanceOf(user2)).to.equal(30n * 10n ** 18n);
       await expect(await shush.balanceOf(user1)).to.equal(65n * 10n ** 18n);
       
-      await expect(whisper.connect(user2).sendEmail("bob", "alice", "CID"))
+      await expect(whisper.connect(user2).sendEmail("bob@whisper.eth", "alice@whisper.eth", "CID"))
         .to.be.revertedWithCustomError(whisper, "SpammerSendingNotAllowed");
     });
 
     it("Should allow sending to recipient with exact minimum balance", async () => {
       const { whisper, shush, user1, user2 } = await loadFixture(registeredUsersFixture);
       for(i=0;i<6;i++){
-        await whisper.connect(user1).reportSpam("bob");
+        await whisper.connect(user1).reportSpam("bob@whisper.eth");
         }
       await expect(await shush.balanceOf(user2)).to.equal(40n * 10n ** 18n);
       await expect(await shush.balanceOf(user1)).to.equal(70n * 10n ** 18n);
       
       
-      await expect(whisper.connect(user2).sendEmail("bob", "alice", "CID"))
+      await expect(whisper.connect(user2).sendEmail("bob@whisper.eth", "alice@whisper.eth", "CID"))
         .to.emit(whisper, "EmailSent");
     });
   });
@@ -280,13 +332,13 @@ describe("Extended Registration Tests", () => {
     it("Should clear and repopulate sent items", async () => {
       const { whisper, user1, user2 } = await loadFixture(registeredUsersFixture);
       
-      await whisper.connect(user1).sendEmail("alice", "bob", "CID1");
+      await whisper.connect(user1).sendEmail("alice@whisper.eth", "bob@whisper.eth", "CID1");
       await whisper.connect(user1).clearSent();
       
       let sent = await whisper.connect(user1).getSent();
       expect(sent.length).to.equal(0);
       
-      await whisper.connect(user1).sendEmail("alice", "bob", "CID2");
+      await whisper.connect(user1).sendEmail("alice@whisper.eth", "bob@whisper.eth", "CID2");
       sent = await whisper.connect(user1).getSent();
       expect(sent.length).to.equal(1);
     });
@@ -297,7 +349,7 @@ describe("Extended Registration Tests", () => {
       await whisper.connect(admin).pause();
       await whisper.connect(admin).unpause();
       
-      await expect(whisper.connect(user1).sendEmail("alice", "bob", "CID"))
+      await expect(whisper.connect(user1).sendEmail("alice@whisper.eth", "bob@whisper.eth", "CID"))
         .to.emit(whisper, "EmailSent");
     });
   });
@@ -309,7 +361,7 @@ describe("Extended Registration Tests", () => {
       const { whisper, user1, user2 } = await loadFixture(registeredUsersFixture);
       
       const blockNumber = await ethers.provider.getBlockNumber();
-      const tx = await whisper.connect(user1).sendEmail("alice", "bob", "CID");
+      const tx = await whisper.connect(user1).sendEmail("alice@whisper.eth", "bob@whisper.eth", "CID");
       
       //const tx = await whisper.connect(user1).sendEmail("alice", "bob", "CID");
       const block = await ethers.provider.getBlock(tx.blockNumber);
@@ -322,15 +374,19 @@ describe("Extended Registration Tests", () => {
       const { whisper, user1 } = await loadFixture(registeredUsersFixture);
       
       const newKey = "new_pubkey_12345";
-      await whisper.connect(user1).updateEncryptionKey(newKey, "alice");
+      await whisper.connect(user1).updateEncryptionKey(newKey, "alice@whisper.eth");
       
-      const storedKey = await whisper.getPublicKeyOf("alice");
+      const storedKey = await whisper.getPublicKeyOf("alice@whisper.eth");
       expect(storedKey).to.equal(newKey);
     });
   });
-
-
-
+/*
+describe("Should Test the new valid email functionality",()=>{
+  it("Should block long emails",async ()=>{
+    
+  })
+})
+*/
 
 
 });

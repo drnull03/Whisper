@@ -15,7 +15,7 @@ async function ipfsPop(cid) {
 
 
     } catch (error) {
-        console.log("ipfs error", error)
+        console.log("ipfs Pop error", error)
         return 'NaN';
     }
 
@@ -29,7 +29,7 @@ async function ipfsPush(text) {
         return cid.toString();
 
     } catch (error) {
-        console.log("ipfs error", error)
+        console.log("ipfs Push error", error)
         return 'NaN';
     }
 }

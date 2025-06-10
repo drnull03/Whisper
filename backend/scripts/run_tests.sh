@@ -1,1 +1,1 @@
-npx hardhat test --network l2_sim
+npx hardhat test --network l2_sim_test

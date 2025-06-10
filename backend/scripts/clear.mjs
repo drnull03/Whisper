@@ -1,4 +1,4 @@
-import fs, { read } from 'fs'
+import fs from 'fs'
 
 const path = '../clients/snapshots.json'
 
