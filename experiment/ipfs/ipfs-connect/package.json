@@ -1,0 +1,15 @@
+{
+  "name": "ipfs-connect",
+  "version": "1.0.0",
+  "description": "connection to the local cluster testing ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "type": "module",
+  "license": "ISC",
+  "dependencies": {
+    "ipfs-http-client": "^60.0.1"
+  }
+}

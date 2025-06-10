@@ -1,0 +1,17 @@
+{
+  "name": "lit",
+  "version": "1.0.0",
+  "description": "testing the lit network with datil-dev",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Diaa Hanna",
+  "license": "ISC",
+  "dependencies": {
+    "@lit-protocol/auth-helpers": "^7.1.1",
+    "@lit-protocol/constants": "^7.1.1",
+    "@lit-protocol/lit-node-client": "^7.1.1",
+    "ethers": "^5.8.0"
+  }
+}
