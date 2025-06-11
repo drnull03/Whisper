@@ -31,6 +31,8 @@ if [[ "$1" == "start" ]]; then
     echo -e "${GREEN}Starting ipfs cluster...${NC}"
     docker compose -f /home/drnull/Whisper/ipfs/docker-compose.yml up 
 
+elif [[ "$1" == "test" ]];then
+    ipfs-cluster-ctl peers ls
 
 
 else
