@@ -1,0 +1,24 @@
+require("@nomicfoundation/hardhat-toolbox");
+
+/** @type import('hardhat/config').HardhatUserConfig */
+module.exports = {
+  solidity: "0.8.28",
+  networks: {
+    l2_sim: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+      //gasPrice: 1000000, // Simulate cheap L2 gas
+      //gas: 12_000_000,// Large blocks like on L2
+      //allowUnlimitedContractSize: true // Optional: L2s like Optimism don’t limit contract size
+    }
+    , l2_sim_test: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+    }
+  }
+};
+
+
+
+
+

@@ -1,3 +1,0 @@
-function tokenURI() public view returns (string memory) {
-    return "ipfs://QmXyZ...ABC123"; // Your IPFS image hash
-}
