@@ -1,0 +1,7 @@
+#!/bin/bash
+
+
+curl -X POST http://localhost:5000/predict \
+     -H "Content-Type: application/json" \
+     -d '{"email_text": "Congratulations! You have won a free lottery ticket!"}'
+
