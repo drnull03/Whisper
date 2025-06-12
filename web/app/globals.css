@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Light mode colors based on provided palette */
+    /*Colors refrence to the /home/drnull/Whisper/assets/color_palette folder*/
     --background: 210 100% 98%;
     --foreground: 210 10% 11%;
 
@@ -42,7 +42,7 @@
   }
 
   .dark {
-    /* Dark mode colors based on provided palette */
+    /*Colors refrence to the /home/drnull/Whisper/assets/color_palette folder*/
     --background: 210 15% 8%;
     --foreground: 210 10% 89%;
 

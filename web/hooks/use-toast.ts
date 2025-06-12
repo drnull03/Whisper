@@ -4,6 +4,8 @@ import type React from "react"
 
 import { useState, useCallback } from "react"
 
+
+//action here are normal jsx might be a button
 type ToastType = {
   id: string
   title?: string
