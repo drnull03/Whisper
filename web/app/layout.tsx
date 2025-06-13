@@ -19,5 +19,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 
 export const metadata = {
-      generator: 'v0.dev'
-    };
+  title: "Whisper App",
+  description: "A modern email client built with Next.js",
+  keywords: ["email", "next.js", "react"],
+  //no website yet
+  authors: [{ name: "Diaa Hanna", url: "https://yourwebsite.com" }],
+  themeColor: "#90cef4",
+  openGraph: {
+    title: "Whisper App",
+    description: "Whisper is a decentralized, censorship-resistant email/messaging system that leverages Ethereum's blockchain and the peer-to-peer communication layer provided by libp2p. It aims to replace traditional email systems with a private, secure, and trust-less alternative that runs entirely on decentralized infrastructure.",
+    url: "https://whisper.eth",
+    siteName: "Whisper",
+    locale: "en_US",
+    type: "website",
+  },
+}
+
